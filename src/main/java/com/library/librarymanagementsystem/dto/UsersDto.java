@@ -9,7 +9,7 @@ import javax.validation.constraints.Pattern;
 import java.io.Serializable;
 
 @Data
-public class UsersDto implements Serializable {
+public class UsersDto {
     @NotBlank(message = "Name required")
     @Length(min = 3, max = 30, message = "Name must be between 3 to 30 characters")
     private final String name;

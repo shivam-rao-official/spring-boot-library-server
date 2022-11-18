@@ -11,7 +11,7 @@ import java.util.List;
 public interface StaffServices {
 
     //    CREATING A NEW ADMIN
-    public boolean createAdmin(StaffDto admin_detail);
+    public boolean createAdmin(Staff admin_detail);
 
     //    CREATING NEW STAFF
     public boolean createStaff(StaffDto staff_detail, String admin_email);

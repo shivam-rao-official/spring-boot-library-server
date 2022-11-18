@@ -22,4 +22,6 @@ public class BooksDto {
     private String bookEdition;
     @NotBlank(message = "ISBN required")
     private String bookISBNNumber;
+    private String dept;
+    private boolean is_stock;
 }

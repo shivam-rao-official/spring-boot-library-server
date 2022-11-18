@@ -1,12 +1,13 @@
 package com.library.librarymanagementsystem.entity;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 
 @Table(name = "users_master")
 @Entity
@@ -40,6 +41,8 @@ public class Users {
     private String collegeId;
 
     private String createdAt;
+
+    private boolean isActive;
 
     private String modifiedOn;
 

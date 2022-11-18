@@ -26,7 +26,7 @@ public class Books {
     @Column(name = "price")
     private String bookPrice;
     private String bookImg;
-    @Column(name = "edition")
+    @Column(name = "description")
     private String bookEdition;
     @Column(name = "isbn", unique = true)
     private String bookISBNNumber;
@@ -34,6 +34,8 @@ public class Books {
     private String addedOn;
     @Column(name = "is_stock")
     private boolean isInStock;
+    @Column(name = "dept")
+    private String dept;
 
 
 

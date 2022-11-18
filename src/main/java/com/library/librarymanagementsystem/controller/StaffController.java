@@ -3,8 +3,12 @@ package com.library.librarymanagementsystem.controller;
 import com.library.librarymanagementsystem.dto.BooksDto;
 import com.library.librarymanagementsystem.dto.StaffDto;
 import com.library.librarymanagementsystem.dto.UsersDto;
+import com.library.librarymanagementsystem.entity.Books;
+import com.library.librarymanagementsystem.entity.Staff;
+import com.library.librarymanagementsystem.entity.Users;
 import com.library.librarymanagementsystem.response.SuccessResponse.ApiResponse;
 import com.library.librarymanagementsystem.service.Staff.StaffServiceImpl;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +16,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.awt.print.Book;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "api/v1/lbs/staff")
@@ -25,7 +31,7 @@ public class StaffController {
     private ApiResponse apiResponse;
 
     @PostMapping(value = "/create-admin")
-    public ResponseEntity<?> createAdmin(@Valid @RequestBody StaffDto admin_detail) {
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody Staff admin_detail) {
 
         boolean userCreated = this.staffService.createAdmin(admin_detail);
         if (userCreated) {
@@ -129,6 +135,18 @@ public class StaffController {
         }
     }
 
+    @PostMapping(value = "/update")
+    public ResponseEntity<?> updateBook(
+            @RequestParam String staff_email, @RequestBody Books book) {
+        if (this.staffService.updateBook(staff_email, book)) {
+            return this.apiResponse.apiResponse(true,
+                    HttpStatus.OK, "Book updated successfully.");
+        }else {
+            return this.apiResponse.apiResponse(false,
+                    HttpStatus.OK, "Book already issued can't update.");
+        }
+    }
+
     @PostMapping(value = "/return")
     public ResponseEntity<?> returnBook(
             @RequestParam String isbn,
@@ -151,5 +169,52 @@ public class StaffController {
             return this.apiResponse.apiResponse(false,
                     HttpStatus.OK,this.staffService.showAllBooks(), "No Books Found");
         }
+    }
+
+    @GetMapping(value = "/summary")
+    public ResponseEntity<?> booksSummary() {
+        if (!this.staffService.bookSummary().isEmpty()) {
+            return this.apiResponse.apiResponse(true,
+                    HttpStatus.OK, this.staffService.bookSummary(),"");
+        }else {
+            return this.apiResponse.apiResponse(false,
+                    HttpStatus.OK,this.staffService.showAllBooks(), "No Books Found");
+        }
+    }
+
+    @GetMapping(value = "/userSummary")
+    public ResponseEntity<?> userSummary() {
+        if (!this.staffService.userSummary().isEmpty()) {
+            return this.apiResponse.apiResponse(true,
+                    HttpStatus.OK, this.staffService.userSummary(),"");
+        }else {
+            return this.apiResponse.apiResponse(false,
+                    HttpStatus.OK,this.staffService.userSummary(), "No Users Found");
+        }
+    }
+
+    @DeleteMapping(value = "/delete-books")
+    public ResponseEntity<?> removeBook(@RequestBody Books book, @RequestParam String email) {
+        if (!this.staffService.removeBook(book, email)) {
+            return this.apiResponse.apiResponse(true,
+                    HttpStatus.OK, "DONE");
+        }else {
+            return this.apiResponse.apiResponse(false,
+                    HttpStatus.OK,"No Books Found");
+        }
+    }
+
+    @GetMapping(value = "/showBooks")
+    public ResponseEntity<?> showAllBooksByFilter(@RequestParam String filter){
+        List<Books> listOfBooks = this.staffService.showBooks(filter);
+        return this.apiResponse.apiResponse(true,
+                HttpStatus.OK, listOfBooks,"DONE");
+    }
+
+    @GetMapping(value = "/showUsers")
+    public ResponseEntity<?> showAllUsersByFilter(@RequestParam String filter){
+        List<Users> listOfUsers = this.staffService.showUsers(filter);
+        return this.apiResponse.apiResponse(true,
+                HttpStatus.OK, listOfUsers,"DONE");
     }
 }

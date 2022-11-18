@@ -15,16 +15,18 @@ import com.library.librarymanagementsystem.repository.BookRepository;
 import com.library.librarymanagementsystem.repository.IssueReturnRepository;
 import com.library.librarymanagementsystem.repository.StaffRepository;
 import com.library.librarymanagementsystem.repository.UsersRepository;
+import com.library.librarymanagementsystem.service.serviceInterface.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.HashMap;
 import java.util.List;
 
 
 @Service
-public class StaffServiceImpl implements StaffServices {
+public class StaffServiceImpl implements StaffServices, BookService {
 
     @Autowired
     private StaffRepository staffRepository;
@@ -45,7 +47,7 @@ public class StaffServiceImpl implements StaffServices {
     private PasswordEncoder passwordEncoder;
 
     @Override
-    public boolean createAdmin(StaffDto admin_detail) {
+    public boolean createAdmin(Staff admin_detail) {
         boolean isEmailExist = this.staffRepository.existsByEmailId(admin_detail.getEmailId());
         if (isEmailExist) {
             throw new UserNotExistsException("Admin already exist with same mail ID>");
@@ -108,10 +110,10 @@ public class StaffServiceImpl implements StaffServices {
 //        ONLY ADMIN CAN DEACTIVATE ANY STAFF AND ITSELF
 //        IF USER IS ADMIN
         boolean isUserAdmin = this.staffRepository.findAdminIdByEmailId(admin_email);
-        if(!isUserAdmin) throw new UnauthorisedAccess("Unauthorised access");
+        if (!isUserAdmin) throw new UnauthorisedAccess("Unauthorised access");
 //        IF STAFF_EMAIL IS EXIST THEN DEACTIVATE
         boolean isStaffExists = this.staffRepository.existsByEmailId(staff_email);
-        if(!isStaffExists) throw new UserNotExistsException("No user exist with the given email id.");
+        if (!isStaffExists) throw new UserNotExistsException("No user exist with the given email id.");
         Staff user = this.staffRepository.findByEmailId(staff_email);
         Staff updatedValue = Staff.builder()
                 .id(user.getId())
@@ -144,10 +146,10 @@ public class StaffServiceImpl implements StaffServices {
     @Override
     public boolean createUser(UsersDto user_detail, String staff_email) {
         boolean isStaffEmailExists = this.staffRepository.existsByEmailId(staff_email);
-        if(!isStaffEmailExists) throw new UserNotExistsException("No staff exist with given email id.");
+        if (!isStaffEmailExists) throw new UserNotExistsException("No staff exist with given email id.");
         Staff staffDetail = this.staffRepository.findByEmailId(staff_email);
         boolean isUserExistsWithSameEmail = this.usersRepository.existsByEmailId(user_detail.getEmailId());
-        if(isUserExistsWithSameEmail) throw new UserNotExistsException("User already exist with same mail ID");
+        if (isUserExistsWithSameEmail) throw new UserNotExistsException("User already exist with same mail ID");
         Users newUser = Users.builder()
                 .name(user_detail.getName())
                 .dept(user_detail.getDept())
@@ -164,14 +166,14 @@ public class StaffServiceImpl implements StaffServices {
     @Override
     public boolean staffLogin(String email, String pswd) {
         Staff staff = this.staffRepository.findByEmailId(email);
-        if(staff == null) return false;
+        if (staff == null) return false;
         return this.passwordEncoder.matches(pswd, staff.getPswd());
     }
 
     @Override
     public boolean addBook(BooksDto book_detail, String staff_email) {
         boolean isStaffEmailExists = this.staffRepository.existsByEmailId(staff_email);
-        if(!isStaffEmailExists) throw new UserNotExistsException("No staff exist with given email id.");
+        if (!isStaffEmailExists) throw new UserNotExistsException("No staff exist with given email id.");
         Staff staffDetail = this.staffRepository.findByEmailId(staff_email);
         Books addNewBook = Books.builder()
                 .bookName(book_detail.getBookName())
@@ -181,6 +183,7 @@ public class StaffServiceImpl implements StaffServices {
                 .bookAuthorName(book_detail.getBookAuthorName())
                 .staff(staffDetail)
                 .addedOn(this.getSysTime.getTimeStamp())
+                .dept(book_detail.getDept())
                 .isInStock(true)
                 .build();
 
@@ -194,14 +197,14 @@ public class StaffServiceImpl implements StaffServices {
                              String userEmail,
                              String staffEmail) {
         boolean staffExist = this.staffRepository.existsByEmailId(staffEmail);
-        if(!staffExist) throw new UserNotExistsException("No Staff exist with given mail ID.");
+        if (!staffExist) throw new UserNotExistsException("No Staff exist with given mail ID.");
         boolean userExist = this.usersRepository.existsByEmailId(userEmail);
-        if(!userExist) throw new UserNotExistsException("No User exist with given mail ID.");
+        if (!userExist) throw new UserNotExistsException("No User exist with given mail ID.");
 
         Books bookEntity = this.bookRepository.findByISBN(bookISBN);
         Staff staffEntity = this.staffRepository.findByEmailId(staffEmail);
-        Users userEntity  = this.usersRepository.findByEmailId(userEmail);
-        if(bookEntity != null && bookEntity.isInStock()){
+        Users userEntity = this.usersRepository.findByEmailId(userEmail);
+        if (bookEntity != null && bookEntity.isInStock()) {
             IssueReturnBooks issueReturnBooks = IssueReturnBooks.builder()
                     .books(bookEntity)
                     .staff(staffEntity)
@@ -225,18 +228,41 @@ public class StaffServiceImpl implements StaffServices {
                     .build();
             this.bookRepository.save(updateBook);
             return true;
-        }if(bookEntity == null) throw new UserNotExistsException("Book Not Exist");
+        }
+        if (bookEntity == null) throw new UserNotExistsException("Book Not Exist");
         return bookEntity.isInStock();
+    }
+
+    public boolean updateBook(String email, Books bookEntity) {
+        Staff staff = this.staffRepository.findByEmailId(email);
+        if (this.bookRepository.bookIsIssued(bookEntity.getBookISBNNumber()) == null) {
+            Books updateBook = Books.builder()
+                    .bookId(bookEntity.getBookId())
+                    .bookName(bookEntity.getBookName())
+                    .bookEdition(bookEntity.getBookEdition())
+                    .bookPrice(bookEntity.getBookPrice())
+                    .bookISBNNumber(bookEntity.getBookISBNNumber())
+                    .bookAuthorName(bookEntity.getBookAuthorName())
+                    .staff(staff)
+                    .addedOn(bookEntity.getAddedOn())
+                    .isInStock(bookEntity.isInStock())
+                    .dept(bookEntity.getDept())
+                    .build();
+            this.bookRepository.save(updateBook);
+            return true;
+        } else
+            return false;
+
     }
 
     @Transactional
     @Override
     public boolean returnBook(String bookISBN,
-                             String userEmail) {
+                              String userEmail) {
         Books bookId = this.bookRepository.findByISBN(bookISBN);
         if (bookId == null) throw new EntityNotExists("Book not exists kindly enter correct ISBN");
         Users userId = this.usersRepository.findByEmailId(userEmail);
-        if(userId == null )throw new UserNotExistsException("User not exists kindly enter correct Email ID");
+        if (userId == null) throw new UserNotExistsException("User not exists kindly enter correct Email ID");
 
         IssueReturnBooks issueDetail = this.issueReturnRepository.findByUserIdAndISBN(
                 userId.getId(), bookId.getBookId());
@@ -274,5 +300,63 @@ public class StaffServiceImpl implements StaffServices {
     public List<Books> showAllBooks() {
         List<Books> books = this.bookRepository.findAll();
         return books;
+    }
+
+    @Override
+    public HashMap<?, ?> bookSummary() {
+        HashMap<String, Integer> summary = new HashMap<>();
+        int totalBooks = this.bookRepository.countOfBooks();
+        int issuedBooks = this.bookRepository.countOfIssuedBooks();
+        int unIssuedBooks = this.bookRepository.countOfUnIssuedBooks();
+        summary.put("Total", totalBooks);
+        summary.put("issued", issuedBooks);
+        summary.put("unIssued", unIssuedBooks);
+
+        System.out.println(totalBooks);
+        return summary;
+    }
+
+    @Override
+    public boolean removeBook(Books book, String email) {
+        if (this.staffRepository.findAdminIdByEmailId(email)) {
+            if (this.bookRepository.findByISBN(book.getBookISBNNumber()) != null) {
+                this.bookRepository.delete(book);
+                return true;
+            } else return false;
+        } else return false;
+
+    }
+
+    public List<Books> showBooks(String filterType) {
+        if (filterType.equals("all")) {
+            return this.bookRepository.findAll();
+        } else if (filterType.equals("avl")) {
+            return this.bookRepository.findAllByFilter("1");
+        } else {
+            return this.bookRepository.findAllByFilter("0");
+        }
+    }
+
+
+    public HashMap<?, ?> userSummary() {
+        HashMap<String, Integer> summary = new HashMap<>();
+        int totalUsers = this.usersRepository.countOfUsers();
+        int activeUser = this.usersRepository.countOfActiveUser();
+        int inActiveUsers = this.usersRepository.countOfInactiveUser();
+        System.out.println(summary);
+        summary.put("Total", totalUsers);
+        summary.put("Active", activeUser);
+        summary.put("InActive", inActiveUsers);
+        return summary;
+    }
+
+    public List<Users> showUsers(String filterType) {
+        if (filterType.equals("all")) {
+            return this.usersRepository.findAll();
+        } else if (filterType.equals("active")) {
+            return this.usersRepository.findAllByFilter("0");
+        } else {
+            return this.usersRepository.findAllByFilter("1");
+        }
     }
 }
