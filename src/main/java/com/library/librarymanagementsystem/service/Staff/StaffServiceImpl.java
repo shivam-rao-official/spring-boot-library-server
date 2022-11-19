@@ -207,8 +207,11 @@ public class StaffServiceImpl implements StaffServices, BookService {
         if (bookEntity != null && bookEntity.isInStock()) {
             IssueReturnBooks issueReturnBooks = IssueReturnBooks.builder()
                     .books(bookEntity)
+                    .bookName(bookEntity.getBookName())
                     .staff(staffEntity)
+                    .staffName(staffEntity.getName())
                     .user(userEntity)
+                    .userName(userEntity.getName())
                     .issueOn(this.getSysTime.getTimeStamp())
                     .issuedTill(this.getSysTime.getTimeStamp(10))
                     .build();

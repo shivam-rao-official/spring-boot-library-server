@@ -26,4 +26,6 @@ public interface UsersRepository extends JpaRepository<Users, Long> {
 
     @Query(value = "SELECT * FROM users_master WHERE is_active = ?1", nativeQuery = true)
     public List<Users> findAllByFilter(String filter);
+
+
 }

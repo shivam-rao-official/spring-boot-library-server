@@ -6,9 +6,10 @@ import com.library.librarymanagementsystem.dto.UsersDto;
 import com.library.librarymanagementsystem.entity.Books;
 import com.library.librarymanagementsystem.entity.Staff;
 import com.library.librarymanagementsystem.entity.Users;
+import com.library.librarymanagementsystem.repository.UsersRepository;
 import com.library.librarymanagementsystem.response.SuccessResponse.ApiResponse;
 import com.library.librarymanagementsystem.service.Staff.StaffServiceImpl;
-import org.apache.catalina.User;
+import com.library.librarymanagementsystem.service.USERS.UsersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.awt.print.Book;
 import java.util.List;
 
 @Controller
@@ -26,6 +26,10 @@ public class StaffController {
 
     @Autowired
     private StaffServiceImpl staffService;
+
+    @Autowired
+    private UsersService usersService;
+
 
     @Autowired
     private ApiResponse apiResponse;
@@ -80,8 +84,14 @@ public class StaffController {
         boolean userLoggedIn = this.staffService.staffLogin(email, pswd);
         if (userLoggedIn) {
             return this.apiResponse.apiResponse(true,
-                    HttpStatus.CREATED, "Login successfully");
-        } else {
+                    HttpStatus.CREATED, "STAFF","Login successfully");
+        }
+        userLoggedIn = this.usersService.userLogin(email, pswd);
+        if (userLoggedIn) {
+            return this.apiResponse.apiResponse(true,
+                    HttpStatus.CREATED, "STUDENT","Login successfully");
+        }
+        else {
             return this.apiResponse.apiResponse(false,
                     HttpStatus.INTERNAL_SERVER_ERROR, "Invalid credential");
         }
@@ -153,7 +163,7 @@ public class StaffController {
             @RequestParam String user_email) {
         if (this.staffService.returnBook(isbn, user_email)) {
             return this.apiResponse.apiResponse(true,
-                    HttpStatus.OK, "Book issued successfully.");
+                    HttpStatus.OK, "Book returned successfully.");
         }else {
             return this.apiResponse.apiResponse(false,
                     HttpStatus.OK, "Invalid ISBN or User ID");

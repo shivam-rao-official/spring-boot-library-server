@@ -22,6 +22,9 @@ public class IssueReturnBooks {
     private String issuedTill;
     @Column(name = "returned_on")
     private String returnOn;
+    private String bookName;
+    private String staffName;
+    private String userName;
 
     @OneToOne
     @JoinColumn(name = "book_id")
