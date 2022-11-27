@@ -176,7 +176,7 @@ public class StaffServiceImpl implements StaffServices, BookService {
         if (!isStaffEmailExists) throw new UserNotExistsException("No staff exist with given email id.");
         Staff staffDetail = this.staffRepository.findByEmailId(staff_email);
         Books addNewBook = Books.builder()
-                .bookName(book_detail.getBookName())
+                .bookName(book_detail.getBookName().toUpperCase())
                 .bookEdition(book_detail.getBookEdition())
                 .bookPrice(book_detail.getBookPrice())
                 .bookISBNNumber(book_detail.getBookISBNNumber())
@@ -207,7 +207,7 @@ public class StaffServiceImpl implements StaffServices, BookService {
         if (bookEntity != null && bookEntity.isInStock()) {
             IssueReturnBooks issueReturnBooks = IssueReturnBooks.builder()
                     .books(bookEntity)
-                    .bookName(bookEntity.getBookName())
+                    .bookName(bookEntity.getBookName().toUpperCase())
                     .staff(staffEntity)
                     .staffName(staffEntity.getName())
                     .user(userEntity)
@@ -220,13 +220,14 @@ public class StaffServiceImpl implements StaffServices, BookService {
 
             Books updateBook = Books.builder()
                     .bookId(bookEntity.getBookId())
-                    .bookName(bookEntity.getBookName())
+                    .bookName(bookEntity.getBookName().toUpperCase())
                     .bookEdition(bookEntity.getBookEdition())
                     .bookPrice(bookEntity.getBookPrice())
                     .bookISBNNumber(bookEntity.getBookISBNNumber())
                     .bookAuthorName(bookEntity.getBookAuthorName())
                     .staff(bookEntity.getStaff())
                     .addedOn(bookEntity.getAddedOn())
+                    .dept(bookEntity.getDept())
                     .isInStock(false)
                     .build();
             this.bookRepository.save(updateBook);
@@ -285,7 +286,7 @@ public class StaffServiceImpl implements StaffServices, BookService {
 
         Books updateBook = Books.builder()
                 .bookId(bookId.getBookId())
-                .bookName(bookId.getBookName())
+                .bookName(bookId.getBookName().toUpperCase())
                 .bookEdition(bookId.getBookEdition())
                 .bookPrice(bookId.getBookPrice())
                 .bookISBNNumber(bookId.getBookISBNNumber())
@@ -330,13 +331,23 @@ public class StaffServiceImpl implements StaffServices, BookService {
 
     }
 
-    public List<Books> showBooks(String filterType) {
-        if (filterType.equals("all")) {
-            return this.bookRepository.findAll();
-        } else if (filterType.equals("avl")) {
-            return this.bookRepository.findAllByFilter("1");
-        } else {
-            return this.bookRepository.findAllByFilter("0");
+    public List<Books> showBooks(String filterType, String dept) {
+        if(dept.isEmpty()) {
+            if (filterType.equals("all")) {
+                return this.bookRepository.findAll();
+            } else if (filterType.equals("avl")) {
+                return this.bookRepository.findAllByFilter("1");
+            } else {
+                return this.bookRepository.findAllByFilter("0");
+            }
+        }else {
+            if (filterType.equals("all")) {
+                return this.bookRepository.findAllByDept(dept);
+            } else if (filterType.equals("avl")) {
+                return this.bookRepository.findAllByFilter("1");
+            } else {
+                return this.bookRepository.findAllByFilter("0");
+            }
         }
     }
 
@@ -361,5 +372,11 @@ public class StaffServiceImpl implements StaffServices, BookService {
         } else {
             return this.usersRepository.findAllByFilter("1");
         }
+    }
+
+    public List<Books> customSearchString(String bookName) {
+        final List<Books> bySearchString = this.bookRepository.findBySearchString(bookName.toUpperCase());
+        System.out.println(bySearchString.toString());
+        return bySearchString;
     }
 }

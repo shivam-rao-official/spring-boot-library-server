@@ -215,8 +215,8 @@ public class StaffController {
     }
 
     @GetMapping(value = "/showBooks")
-    public ResponseEntity<?> showAllBooksByFilter(@RequestParam String filter){
-        List<Books> listOfBooks = this.staffService.showBooks(filter);
+    public ResponseEntity<?> showAllBooksByFilter(@RequestParam String filter, @RequestParam String dept){
+        List<Books> listOfBooks = this.staffService.showBooks(filter, dept);
         return this.apiResponse.apiResponse(true,
                 HttpStatus.OK, listOfBooks,"DONE");
     }
@@ -227,4 +227,13 @@ public class StaffController {
         return this.apiResponse.apiResponse(true,
                 HttpStatus.OK, listOfUsers,"DONE");
     }
+
+    @GetMapping(value = "/byBookName")
+    public ResponseEntity<?> getBooksBySearchString(@RequestParam String key){
+        final List<Books> books = this.staffService.customSearchString(key);
+        return this.apiResponse.apiResponse(true,
+                HttpStatus.OK, books,"DONE");
+
+    }
+
 }
